@@ -9,7 +9,7 @@ A Model Context Protocol (MCP) server that connects OmniFocus to Claude and othe
 
 ## Overview
 
-This server bridges AI assistants and your OmniFocus database. Through natural conversation, an assistant can query, create, edit, and remove tasks and projects — including bulk operations. Some things you can do with it:
+This server bridges AI assistants and your OmniFocus database. Through natural conversation, an assistant can query, create, edit, and remove tasks, projects, and folders — including bulk operations. Some things you can do with it:
 
 - Translate a syllabus PDF into a fully specified project with tasks, tags, defer dates, and due dates
 - Turn a meeting transcript into a list of actions
@@ -81,7 +81,7 @@ Other MCP clients work the same way: launch `npx -y omnifocus-mcp` over stdio.
 
 ## Tools
 
-The server provides 12 tools. Optional parameters are marked.
+The server provides 16 tools. Optional parameters are marked.
 
 ### `query_omnifocus`
 
@@ -130,6 +130,40 @@ Create a new project.
 - `folderName` *(optional)*: folder to place the project in
 - `sequential` *(optional)*: whether tasks must be completed in order
 - `note`, `dueDate`, `deferDate`, `flagged`, `estimatedMinutes`, `tags` *(all optional)*
+
+### `create_folder`
+
+Create a folder at the root or under an existing parent.
+
+- `name`
+- `parentFolderName` *(optional)*: parent folder name or slash-separated path
+- `parentFolderID` *(optional)*: parent folder ID; takes precedence over `parentFolderName`
+- `status` *(optional)*: `active` (default) or `dropped`
+
+Folder names cannot contain `/`, which is reserved as the path separator. When a name is ambiguous, use an ID or a full path.
+
+### `ensure_folder`
+
+Ensure a slash-separated folder hierarchy exists, like `mkdir -p`.
+
+- `path`: e.g. `Work/Engineering/Platform`
+
+Existing components are reused without changing their status; missing components are created as active folders. Leading, trailing, and repeated `/` characters are ignored. The response includes the final folder ID and every component created during this call.
+
+### `edit_folder`
+
+Rename, move, or change an existing folder's status.
+
+- `id` or `name`: target folder; IDs take precedence and names accept slash-separated paths
+- `newName` *(optional)*
+- `newParentFolderName` / `newParentFolderID` *(optional)*: move to a parent; ID takes precedence. Pass `newParentFolderName: ""` to move to the root.
+- `newStatus` *(optional)*: `active` or `dropped`
+
+Moving a folder into itself or one of its descendants is rejected.
+
+### `remove_folder`
+
+Remove a folder by `id` or name/path. **Warning:** OmniFocus removes the folder's contained hierarchy as well. Use an ID or full path whenever a name is ambiguous.
 
 ### `edit_item`
 

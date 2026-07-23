@@ -17,6 +17,10 @@ import * as listPerspectivesTool from './tools/definitions/listPerspectives.js';
 import * as getPerspectiveViewTool from './tools/definitions/getPerspectiveView.js';
 import * as listTagsTool from './tools/definitions/listTags.js';
 import * as createTagTool from './tools/definitions/createTag.js';
+import * as createFolderTool from './tools/definitions/createFolder.js';
+import * as editFolderTool from './tools/definitions/editFolder.js';
+import * as removeFolderTool from './tools/definitions/removeFolder.js';
+import * as ensureFolderTool from './tools/definitions/ensureFolder.js';
 
 /**
  * Server construction, factored out of `server.ts` (issue #80).
@@ -60,6 +64,7 @@ QUERY FILTER TIPS:
 - Status values for projects: Active, OnHold, Done, Dropped
 - Use reviewDue: true filter on projects to find projects needing review
 - Use edit_item with markReviewed: true to mark a project as reviewed
+- Use ensure_folder to create or reuse every component of a folder hierarchy
 - Combine filters with AND logic; within arrays, OR logic applies`;
 
 export interface BuiltServer {
@@ -180,6 +185,34 @@ export function createOmniFocusServer(): BuiltServer {
     "Create a new tag in OmniFocus, optionally nested under an existing parent tag",
     createTagTool.schema.shape,
     createTagTool.handler
+  );
+
+  server.tool(
+    "create_folder",
+    "Create a new OmniFocus folder at the root or under an existing parent folder",
+    createFolderTool.schema.shape,
+    createFolderTool.handler
+  );
+
+  server.tool(
+    "edit_folder",
+    "Rename a folder, move it to a different parent or the root, or change its active/dropped status",
+    editFolderTool.schema.shape,
+    editFolderTool.handler
+  );
+
+  server.tool(
+    "remove_folder",
+    "Remove a folder. OmniFocus also removes its contained hierarchy.",
+    removeFolderTool.schema.shape,
+    removeFolderTool.handler
+  );
+
+  server.tool(
+    "ensure_folder",
+    "Ensure a slash-separated folder path exists, creating only missing components like mkdir -p",
+    ensureFolderTool.schema.shape,
+    ensureFolderTool.handler
   );
 
   return { server, logger };
