@@ -163,7 +163,11 @@ Moving a folder into itself or one of its descendants is rejected.
 
 ### `remove_folder`
 
-Remove a folder by `id` or name/path. **Warning:** OmniFocus removes the folder's contained hierarchy as well. Use an ID or full path whenever a name is ambiguous.
+Remove a folder by `id` or name/path.
+
+- `recursive` *(optional)*: must be `true` to remove a non-empty folder
+
+**Warning:** recursive removal deletes the folder, every descendant folder, its contained projects, and all tasks in those projects. Without `recursive: true`, a non-empty folder returns a bounded direct-contents summary (folders, projects, and task counts) and is not changed. Use an ID or full path whenever a name is ambiguous.
 
 ### `edit_item`
 

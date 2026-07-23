@@ -203,7 +203,7 @@ export function createOmniFocusServer(): BuiltServer {
 
   server.tool(
     "remove_folder",
-    "Remove a folder. OmniFocus also removes its contained hierarchy.",
+    "Remove an OmniFocus folder. Non-empty folders require recursive: true because OmniFocus deletes contained folders, projects, and tasks.",
     removeFolderTool.schema.shape,
     removeFolderTool.handler
   );

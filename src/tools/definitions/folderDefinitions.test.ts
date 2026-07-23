@@ -18,6 +18,13 @@ describe('folder tool definitions', () => {
     })).toMatchObject({ id: 'folder-id', newParentFolderName: '', newStatus: 'active' });
   });
 
+  it('accepts explicit recursive removal confirmation', () => {
+    expect(removeFolder.schema.parse({ id: 'folder-id', recursive: true })).toMatchObject({
+      id: 'folder-id',
+      recursive: true,
+    });
+  });
+
   it('requires an identifier before edit or removal reaches OmniFocus', async () => {
     const editResponse = await editFolder.handler({} as never, {} as never);
     const removeResponse = await removeFolder.handler({} as never, {} as never);

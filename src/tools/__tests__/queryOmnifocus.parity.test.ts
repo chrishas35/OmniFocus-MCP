@@ -135,15 +135,17 @@ describe('query_omnifocus filter parity (#71)', () => {
     }
   });
 
-  it('the folders entity intentionally supports no filters', () => {
+  it('the folders entity supports only status filtering', () => {
     for (const filter of Object.keys(FILTER_SPEC)) {
-      expect(isImplemented('folders', filter), `folders should not implement ${filter}`).toBe(false);
+      expect(isImplemented('folders', filter), `unexpected folder filter behavior for ${filter}`)
+        .toBe(filter === 'status');
     }
   });
 
   it('status filter uses the entity-appropriate status map (no copy-paste drift)', () => {
     expect(generateFilterConditions('tasks', { status: ['Available'] })).toContain('taskStatusMap');
     expect(generateFilterConditions('projects', { status: ['Active'] })).toContain('projectStatusMap');
+    expect(generateFilterConditions('folders', { status: ['Active'] })).toContain('folderStatusMap');
     // ...and not the other way around.
     expect(generateFilterConditions('projects', { status: ['Active'] })).not.toContain('taskStatusMap[');
   });

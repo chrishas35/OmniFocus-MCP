@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { queryOmnifocus } from '../../tools/primitives/queryOmnifocus.js';
 import { errorHandlerScript, executeFolderScript, jsonEscapeHelpersScript } from '../../tools/primitives/folderHelpers.js';
+import { handler as removeFolderHandler } from '../../tools/definitions/removeFolder.js';
 import { getFolderState, resolveItemName } from './helpers.js';
 import {
   createTrackedFolder,
+  createTrackedProject,
+  createTrackedTask,
   editFolder,
   ensureFolder,
   registry,
@@ -118,12 +121,38 @@ ${errorHandlerScript()}`, 'folder_error_test');
     expect((await getFolderState(parent.folderId!))?.parentFolderId).toBe(registry.runFolderId);
   });
 
-  it('removes a non-empty folder and its contained hierarchy by ID', async () => {
+  it('requires explicit recursive confirmation and summarizes a non-empty folder', async () => {
     const folder = await createTrackedFolder({ name: 'TEST:Remove Folder', parentFolderID: registry.runFolderId });
     const child = await createTrackedFolder({ name: 'TEST:Remove Child', parentFolderID: folder.folderId });
-    const result = await removeFolder({ id: folder.folderId });
-    expect(result.success).toBe(true);
+    const project = await createTrackedProject({ name: 'TEST:Remove Project', folderName: 'TEST:Remove Folder' });
+    const task = await createTrackedTask({ name: 'TEST:Remove Project Task', projectName: 'TEST:Remove Project' });
+
+    const blocked = await removeFolder({ id: folder.folderId });
+    expect(blocked.success).toBe(false);
+    expect(blocked.requiresRecursive).toBe(true);
+    expect(blocked.error).toContain('recursive: true');
+    expect(blocked.deletionSummary).toMatchObject({
+      directFolderCount: 1,
+      directProjectCount: 1,
+      directTaskCount: 1,
+      folders: [{ id: child.folderId, name: 'TEST:Remove Child', status: 'active' }],
+      projects: [{ id: project.projectId, name: 'TEST:Remove Project', status: 'active', taskCount: 1 }],
+    });
+    expect(await resolveItemName(folder.folderId!, 'folder')).toBe('TEST:Remove Folder');
+    expect(await resolveItemName(project.projectId!, 'project')).toBe('TEST:Remove Project');
+    expect(await resolveItemName(task.taskId!, 'task')).toBe('TEST:Remove Project Task');
+
+    const blockedTool = await removeFolderHandler({ id: folder.folderId } as never, {} as never);
+    expect(blockedTool.isError).toBe(true);
+    expect(blockedTool.content[0].text).toContain('TEST:Remove Child');
+    expect(blockedTool.content[0].text).toContain('TEST:Remove Project');
+    expect(blockedTool.content[0].text).toContain('1 task(s)');
+
+    const removed = await removeFolder({ id: folder.folderId, recursive: true });
+    expect(removed.success).toBe(true);
     expect(await resolveItemName(folder.folderId!, 'folder')).toBeNull();
     expect(await resolveItemName(child.folderId!, 'folder')).toBeNull();
+    expect(await resolveItemName(project.projectId!, 'project')).toBeNull();
+    expect(await resolveItemName(task.taskId!, 'task')).toBeNull();
   });
 });

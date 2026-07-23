@@ -9,12 +9,37 @@ const execAsync = promisify(exec);
 
 export type FolderStatus = 'active' | 'dropped';
 
+export interface FolderDeletionFolder {
+  id: string;
+  name: string;
+  status: FolderStatus;
+}
+
+export interface FolderDeletionProject {
+  id: string;
+  name: string;
+  status: string;
+  taskCount: number;
+}
+
+export interface FolderDeletionSummary {
+  directFolderCount: number;
+  directProjectCount: number;
+  directTaskCount: number;
+  folders: FolderDeletionFolder[];
+  projects: FolderDeletionProject[];
+  foldersTruncated: boolean;
+  projectsTruncated: boolean;
+}
+
 export interface FolderResult {
   success: boolean;
   folderId?: string;
   createdFolderIds?: string[];
   error?: string;
   errorCode?: number;
+  requiresRecursive?: boolean;
+  deletionSummary?: FolderDeletionSummary;
 }
 
 /**
@@ -124,6 +149,8 @@ export async function executeFolderScript(script: string, operation: string): Pr
       createdFolderIds: result.createdFolderIds,
       error: result.error,
       errorCode: result.errorCode,
+      requiresRecursive: result.requiresRecursive,
+      deletionSummary: result.deletionSummary,
     };
   } catch (error: any) {
     console.error(`Error in ${operation}:`, error);
