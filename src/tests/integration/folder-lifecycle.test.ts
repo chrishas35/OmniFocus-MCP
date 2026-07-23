@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { queryOmnifocus } from '../../tools/primitives/queryOmnifocus.js';
+import { errorHandlerScript, executeFolderScript, jsonEscapeHelpersScript } from '../../tools/primitives/folderHelpers.js';
 import { getFolderState, resolveItemName } from './helpers.js';
 import {
   createTrackedFolder,
@@ -16,6 +17,19 @@ describe('Folder Lifecycle (integration)', () => {
   let folderId: string;
   const anchorName = `TEST:Folder Lifecycle Anchor ${Date.now()}`;
   let anchorId: string;
+
+  it('returns parseable details for unexpected AppleScript errors', async () => {
+    const result = await executeFolderScript(`${jsonEscapeHelpersScript()}
+
+try
+  error ("TEST: quoted " & quote & "error" & quote & linefeed & "second line")
+${errorHandlerScript()}`, 'folder_error_test');
+    expect(result).toMatchObject({
+      success: false,
+      error: 'TEST: quoted "error"\nsecond line',
+      errorCode: -2700,
+    });
+  });
 
   it('creates a dropped folder under a parent found by name', async () => {
     const anchor = await createTrackedFolder({ name: anchorName });

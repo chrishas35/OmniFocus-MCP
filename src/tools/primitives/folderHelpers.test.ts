@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  errorHandlerScript,
   generateFolderReferenceLookupScript,
+  jsonEscapeHelpersScript,
   normalizeFolderPath,
   validateFolderName,
 } from './folderHelpers.js';
@@ -42,5 +44,13 @@ describe('folder helpers', () => {
     expect(script).toContain('set currentFolder to container of currentFolder');
     expect(script).toContain('count of matchingFolders');
     expect(script).toContain('Ambiguous');
+  });
+
+  it('serializes unexpected AppleScript errors with their message and error code', () => {
+    expect(jsonEscapeHelpersScript()).toContain('on jsonEscape(theText)');
+    const handler = errorHandlerScript();
+    expect(handler).toContain('on error errorMessage number errorNumber');
+    expect(handler).toContain('my jsonEscape(errorMessage)');
+    expect(handler).toContain('errorCode');
   });
 });

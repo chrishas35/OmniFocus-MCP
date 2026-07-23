@@ -3,6 +3,7 @@ import {
   FolderResult,
   folderStatusScript,
   normalizeFolderPath,
+  jsonEscapeHelpersScript,
   errorHandlerScript,
 } from './folderHelpers.js';
 import { escapeAppleScriptString } from '../../utils/appleScriptHelpers.js';
@@ -24,7 +25,9 @@ export function generateAppleScript(params: EnsureFolderParams): string {
     .map(component => `"${escapeAppleScriptString(component, { preserveNewlines: true })}"`)
     .join(', ');
 
-  return `try
+  return `${jsonEscapeHelpersScript()}
+
+try
   tell application "OmniFocus"
     tell front document
       set pathComponents to {${pathItems}}

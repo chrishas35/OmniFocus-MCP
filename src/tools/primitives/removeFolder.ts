@@ -2,6 +2,7 @@ import {
   executeFolderScript,
   FolderResult,
   generateFolderReferenceLookupScript,
+  jsonEscapeHelpersScript,
   errorHandlerScript,
 } from './folderHelpers.js';
 
@@ -27,7 +28,9 @@ export function generateAppleScript(params: RemoveFolderParams): string {
     'Folder is ambiguous; use its ID or a more specific path'
   );
 
-  return `try
+  return `${jsonEscapeHelpersScript()}
+
+try
   tell application "OmniFocus"
     tell front document
       ${lookup}

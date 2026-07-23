@@ -5,6 +5,7 @@ import {
   folderStatusScript,
   generateFolderReferenceLookupScript,
   validateFolderName,
+  jsonEscapeHelpersScript,
   errorHandlerScript,
 } from './folderHelpers.js';
 import { escapeAppleScriptString } from '../../utils/appleScriptHelpers.js';
@@ -99,7 +100,9 @@ export function generateAppleScript(params: EditFolderParams): string {
     updates += `\n      ${folderStatusScript(params.newStatus, 'foundFolder')}`;
   }
 
-  return `try
+  return `${jsonEscapeHelpersScript()}
+
+try
   tell application "OmniFocus"
     tell front document
       ${sourceLookup}

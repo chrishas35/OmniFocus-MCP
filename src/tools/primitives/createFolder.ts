@@ -5,6 +5,7 @@ import {
   folderStatusScript,
   generateFolderReferenceLookupScript,
   validateFolderName,
+  jsonEscapeHelpersScript,
   errorHandlerScript,
 } from './folderHelpers.js';
 import { escapeAppleScriptString } from '../../utils/appleScriptHelpers.js';
@@ -38,7 +39,9 @@ export function generateAppleScript(params: CreateFolderParams): string {
     ? `set newFolder to make new folder with properties {name:"${name}"} at end of folders of parentFolder`
     : `set newFolder to make new folder with properties {name:"${name}"}`;
 
-  return `try
+  return `${jsonEscapeHelpersScript()}
+
+try
   tell application "OmniFocus"
     tell front document
       ${parentLookup}

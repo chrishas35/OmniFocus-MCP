@@ -14,6 +14,7 @@ export interface FolderResult {
   folderId?: string;
   createdFolderIds?: string[];
   error?: string;
+  errorCode?: number;
 }
 
 /**
@@ -122,6 +123,7 @@ export async function executeFolderScript(script: string, operation: string): Pr
       folderId: result.folderId,
       createdFolderIds: result.createdFolderIds,
       error: result.error,
+      errorCode: result.errorCode,
     };
   } catch (error: any) {
     console.error(`Error in ${operation}:`, error);
@@ -143,10 +145,32 @@ export function folderStatusScript(status: FolderStatus, variableName: string): 
   return `set hidden of ${variableName} to ${status === 'dropped'}`;
 }
 
+/**
+ * AppleScript helpers for producing JSON without corrupting quotes,
+ * backslashes, or line breaks in OmniFocus names and error messages.
+ */
+export function jsonEscapeHelpersScript(): string {
+  return `on replaceText(theText, searchString, replacementString)
+  set AppleScript's text item delimiters to searchString
+  set textItems to every text item of theText
+  set AppleScript's text item delimiters to replacementString
+  set resultText to textItems as text
+  set AppleScript's text item delimiters to ""
+  return resultText
+end replaceText
+
+on jsonEscape(theText)
+  set escapedText to theText as text
+  set escapedText to my replaceText(escapedText, "\\\\", "\\\\\\\\")
+  set escapedText to my replaceText(escapedText, "\\\"", "\\\\\\\"")
+  set escapedText to my replaceText(escapedText, return, "\\\\r")
+  set escapedText to my replaceText(escapedText, linefeed, "\\\\n")
+  return escapedText
+end jsonEscape`;
+}
+
 export function errorHandlerScript(): string {
-  // Avoid interpolating AppleScript error text into JSON; it may contain quotes
-  // or newlines and make the machine-readable result invalid.
-  return `on error
-    return "{\\\"success\\\":false,\\\"error\\\":\\\"AppleScript operation failed\\\"}"
+  return `on error errorMessage number errorNumber
+    return "{\\\"success\\\":false,\\\"error\\\":\\\"" & my jsonEscape(errorMessage) & "\\\",\\\"errorCode\\\":" & errorNumber & "}"
   end try`;
 }
