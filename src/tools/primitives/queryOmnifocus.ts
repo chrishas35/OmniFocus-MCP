@@ -191,7 +191,12 @@ function generateQueryScript(params: QueryOmnifocusParams): string {
         [Project.Status.Dropped]: "Dropped",
         [Project.Status.OnHold]: "OnHold"
       };
-      
+
+      const folderStatusMap = {
+        [Folder.Status.Active]: "Active",
+        [Folder.Status.Dropped]: "Dropped"
+      };
+
       // Helper to collect all descendant folder IDs by walking down from a folder.
       // parentFolder is unreliable on flattenedFolders, so we walk children instead.
       function collectDescendantFolderIds(folder, idSet) {
@@ -620,6 +625,13 @@ function generateFilterConditions(entity: string, filters: any): string {
     }
   }
 
+  if (entity === 'folders' && filters.status && filters.status.length > 0) {
+    const statusCondition = filters.status.map((status: string) =>
+      `folderStatusMap[item.status] === "${escapeJXA(status)}"`
+    ).join(' || ');
+    conditions.push(`if (!(${statusCondition})) return false;`);
+  }
+
   return conditions.join('\n');
 }
 
@@ -693,6 +705,7 @@ function generateFieldMapping(entity: string, fields?: string[]): string {
           id: item.id.primaryKey,
           name: item.name || "",
           projectCount: projectArray.length,
+          status: folderStatusMap[item.status] || "Unknown",
           path: ${FOLDER_PATH_EXPR},
           parentFolderID: ${FOLDER_PARENT_ID_EXPR}
         };
@@ -713,7 +726,9 @@ function generateFieldMapping(entity: string, fields?: string[]): string {
     } else if (field === 'taskStatus') {
       return `taskStatus: taskStatusMap[item.taskStatus]`;
     } else if (field === 'status') {
-      return `status: projectStatusMap[item.status]`;
+      return entity === 'folders'
+        ? `status: folderStatusMap[item.status]`
+        : `status: projectStatusMap[item.status]`;
     } else if (field === 'modificationDate' || field === 'modified') {
       return entity === 'projects'
         ? `modificationDate: formatDate(${PROJECT_MODIFIED_EXPR})`

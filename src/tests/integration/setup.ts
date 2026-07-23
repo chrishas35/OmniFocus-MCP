@@ -1,12 +1,16 @@
 import { beforeAll, afterAll } from 'vitest';
 import { TestRegistry } from './registry.js';
-import { assertOmniFocusRunning, createFolder, TEST_PREFIX } from './helpers.js';
+import { assertOmniFocusRunning, createFolder as createTestFolder, TEST_PREFIX } from './helpers.js';
 import { addOmniFocusTask } from '../../tools/primitives/addOmniFocusTask.js';
 import { addProject } from '../../tools/primitives/addProject.js';
 import { editItem } from '../../tools/primitives/editItem.js';
 import { removeItem } from '../../tools/primitives/removeItem.js';
 import { batchAddItems } from '../../tools/primitives/batchAddItems.js';
 import { batchRemoveItems } from '../../tools/primitives/batchRemoveItems.js';
+import { createFolder, CreateFolderParams } from '../../tools/primitives/createFolder.js';
+import { editFolder } from '../../tools/primitives/editFolder.js';
+import { removeFolder } from '../../tools/primitives/removeFolder.js';
+import { ensureFolder } from '../../tools/primitives/ensureFolder.js';
 
 export const registry = new TestRegistry();
 
@@ -30,6 +34,16 @@ export async function createTrackedProject(
   return result;
 }
 
+export async function createTrackedFolder(
+  params: CreateFolderParams
+): Promise<{ success: boolean; folderId?: string; error?: string }> {
+  const result = await createFolder(params);
+  if (result.success && result.folderId) {
+    registry.track(result.folderId, params.name, 'folder');
+  }
+  return result;
+}
+
 export async function safeRemoveTracked(
   id: string,
   itemType: 'task' | 'project'
@@ -41,12 +55,12 @@ export async function safeRemoveTracked(
   return result;
 }
 
-export { editItem, removeItem, batchAddItems, batchRemoveItems };
+export { editItem, removeItem, batchAddItems, batchRemoveItems, editFolder, removeFolder, ensureFolder };
 
 export function setupIntegration() {
   beforeAll(async () => {
     await assertOmniFocusRunning();
-    const folderId = await createFolder(registry.runFolder);
+    const folderId = await createTestFolder(registry.runFolder);
     registry.runFolderId = folderId;
     registry.track(folderId, registry.runFolder, 'folder');
     const projResult = await addProject({

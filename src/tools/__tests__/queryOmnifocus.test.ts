@@ -459,6 +459,23 @@ describe('generateFieldMapping - project id namespace', () => {
     const result = generateFieldMapping('folders', ['projects']);
     expect(result).toContain('item.projects.map(p => p.task.id.primaryKey)');
   });
+
+  it('maps folder status through the folder status map', () => {
+    const result = generateFieldMapping('folders', ['status']);
+    expect(result).toContain('folderStatusMap[item.status]');
+    expect(result).not.toContain('projectStatusMap');
+  });
+
+  it('walks the complete folder ancestry for folder paths', () => {
+    const result = generateFieldMapping('folders', ['path']);
+    expect(result).toContain('node.parent');
+    expect(result).toContain('segments.unshift(node.name)');
+  });
+
+  it('filters folders through the folder status map', () => {
+    const result = generateFilterConditions('folders', { status: ['Active'] });
+    expect(result).toContain('folderStatusMap[item.status] === "Active"');
+  });
 });
 
 // ============================================================

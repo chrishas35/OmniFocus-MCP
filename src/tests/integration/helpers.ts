@@ -48,6 +48,30 @@ export async function createFolder(name: string): Promise<string> {
   return result;
 }
 
+export async function getFolderState(id: string): Promise<{ name: string; parentFolderId: string | null; hidden: boolean } | null> {
+  const escapedId = id.replace(/["\\]/g, '\\$&');
+  try {
+    const result = await execAppleScript(`
+      tell application "OmniFocus"
+        tell front document
+          set foundFolder to first flattened folder whose id is "${escapedId}"
+          set parentId to ""
+          try
+            if class of container of foundFolder is folder then
+              set parentId to id of container of foundFolder as string
+            end if
+          end try
+          return (name of foundFolder) & "|||" & parentId & "|||" & (hidden of foundFolder as string)
+        end tell
+      end tell
+    `);
+    const [name, parentId, hidden] = result.split('|||');
+    return { name, parentFolderId: parentId || null, hidden: hidden === 'true' };
+  } catch {
+    return null;
+  }
+}
+
 export async function resolveItemName(id: string, type: 'task' | 'project' | 'tag' | 'folder'): Promise<string | null> {
   const escapedId = id.replace(/["\\]/g, '\\$&');
   const singular = type === 'task' ? 'flattened task' : type === 'project' ? 'flattened project' : type === 'tag' ? 'flattened tag' : 'flattened folder';
